@@ -120,7 +120,7 @@ for a = 1:n_stims
     this_whisk_wave         = [this_whisk_wave append_zeros];               % append the zero values
     
     if length(this_whisk_wave) > 5000
-        error(['Number of samples for whisking waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trigger frequency or whisk sample rate'])
+        error(['Number of samples for whisking waveform exceeds PulsePal 2; maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trigger frequency or whisk sample rate'])
     end
     
     prepend_zeros   = zeros(1,this_whisk_delay / sync_sample_duration);                     % part of trial before whisker stim
@@ -132,7 +132,7 @@ for a = 1:n_stims
     sync_pulse_wave = (sync_pulse_wave + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
     
     if length(this_whisk_wave) > 5000
-        error(['Number of samples for syncing waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
+        error(['Number of samples for syncing waveform exceeds PulsePal 2; maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
     end
     
     % Now start populating the PulsePal parameter matrix
