@@ -32,7 +32,7 @@ sync_sample_duration    = 0.001;    % duration of each sample / pulse in the tri
 %% Output channel assignment
 
 whisk_wave_channel          = 1; % Which channel provides the whisking waveform for the amplifier
-trial_whisk_ttl_channel    	= 2; % Which channel provides the TTL signal for when the whisker is on
+trial_whisk_ttl_channel    	= 2; % Which channel provides the TTL signal for trial and whisking info to sync with the acquisition system?
 led_ttl_channel             = 3; % Which channel provides the TTL trigger for the LED module
 stim_switch_channel         = 4; % Which channel provides the signal that determines which stimulator to use
 
@@ -120,57 +120,57 @@ for a = 1:n_stims
     this_whisk_wave         = [this_whisk_wave append_zeros];               % append the zero values
     
     if length(this_whisk_wave) > 5000
-        error(['Number of samples for whisking waveform exceeds PulsePal 2; maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trigger frequency or whisk sample rate'])
+        error(['Number of samples for whisking waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trigger frequency or whisk sample rate'])
     end
     
-    prepend_zeros   = zeros(1,this_whisk_delay / sync_sample_duration);                     % part of trial before whisker stim
-    whisk_stim_on   = repmat(this_whisk_wave,1,n_whisk_stims) ~= 0;                         % representation of whenever whisk is happening based on whisker waveform above, but at wrong sample rate
-    whisk_stim_on   = resample(whisk_stim_on,stim_sample_duration,sync_sample_duration);    % resample to correspond to sync_sample_rate
-    append_zeros    = zeros(1,(trial_length / sync_sample_duration) - (length(prepend_zeros) + length(whisk_stim_on))); % find out how many samples need to be appended to complete the trial
+    prepend_zeros           = zeros(1,this_whisk_delay / sync_sample_duration);                     % part of trial before whisker stim
+    whisk_stim_on           = repmat(this_whisk_wave,1,n_whisk_stims) ~= 0;                         % representation of whenever whisk is happening based on whisker waveform above, but at wrong sample rate
+    whisk_stim_on           = resample(whisk_stim_on,stim_sample_duration,sync_sample_duration);    % resample to correspond to sync_sample_rate
+    append_zeros            = zeros(1,(trial_length / sync_sample_duration) - (length(prepend_zeros) + length(whisk_stim_on))); % find out how many samples need to be appended to complete the trial
     
-    sync_pulse_wave = [prepend_zeros whisk_stim_on append_zeros];           % string all parts of the sync signal together
-    sync_pulse_wave = (sync_pulse_wave + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
+    sync_pulse_wave         = [prepend_zeros whisk_stim_on append_zeros];           % string all parts of the sync signal together
+    sync_pulse_wave         = (sync_pulse_wave + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
     
     if length(this_whisk_wave) > 5000
-        error(['Number of samples for syncing waveform exceeds PulsePal 2; maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
+        error(['Number of samples for syncing waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
     end
     
     % Now start populating the PulsePal parameter matrix
-    stim_matrix             = DefaultMatrix;                                % copy default matrix for trial-specific editing
+    stim_matrix                                 = DefaultMatrix;                % copy default matrix for trial-specific editing
     
     % programming whisker waveform channel
-    stim_matrix{15,whisk_wave_channel+1}    = 1;                            % 15: 'CustomTrainID'
-    stim_matrix{17,whisk_wave_channel+1}    = 1;                            % 17: 'CustomTrainLoop'
+    stim_matrix{15,whisk_wave_channel+1}        = 1;                            % 15: 'CustomTrainID'
+    stim_matrix{17,whisk_wave_channel+1}        = 1;                            % 17: 'CustomTrainLoop'
     
-    stim_matrix{12,whisk_wave_channel+1}    = this_whisk_delay;             % 12: 'PulseTrainDelay'
-    stim_matrix{11,whisk_wave_channel+1}    = stim_burst_duration;          % 11: 'PulseTrainDuration'
-    stim_matrix{5,whisk_wave_channel+1}     = stim_sample_duration;         % 5: 'Phase1Duration'
-   
+    stim_matrix{12,whisk_wave_channel+1}        = this_whisk_delay;             % 12: 'PulseTrainDelay'
+    stim_matrix{11,whisk_wave_channel+1}        = stim_burst_duration;          % 11: 'PulseTrainDuration'
+    stim_matrix{5,whisk_wave_channel+1}         = stim_sample_duration;         % 5: 'Phase1Duration'
+    
     % programming trial and whisk sync channel (trial = 2.5V, trial & whisk = 5V)
-    stim_matrix(15,trial_ttl_channel+1)     = 2;                            % 15: 'CustomTrainID'
-    stim_matrix{17,trial_ttl_channel+1}     = 1;                            % 17: 'CustomTrainLoop'
+    stim_matrix(15,trial_whisk_ttl_channel+1)	= 2;                            % 15: 'CustomTrainID'
+    stim_matrix{17,trial_whisk_ttl_channel+1} 	= 1;                            % 17: 'CustomTrainLoop'
     
-    stim_matrix{12,trial_ttl_channel+1}     = 0;                            % 12: 'PulseTrainDelay' - Delay
-    stim_matrix{11,trial_ttl_channel+1}     = trial_length;                 % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
-    stim_matrix{5,trial_ttl_channel+1}      = sync_sample_duration;      	% 5: 'Phase1Duration' - duration of each sample in pulse train (?)
+    stim_matrix{12,trial_whisk_ttl_channel+1}  	= 0;                            % 12: 'PulseTrainDelay' - Delay
+    stim_matrix{11,trial_whisk_ttl_channel+1} 	= trial_length;                 % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
+    stim_matrix{5,trial_whisk_ttl_channel+1}  	= sync_sample_duration;      	% 5: 'Phase1Duration' - duration of each sample in pulse train (?)
     
     % programming LED TTL channel
-    stim_matrix{12,led_ttl_channel+1}       = this_led_delay;               % 12: 'PulseTrainDelay' - Delay
-    stim_matrix{5,led_ttl_channel+1}        = this_led_duration;            % 5: 'Phase1Duration' - Duration of TTL up
-    stim_matrix{11,led_ttl_channel+1}       = this_led_duration;            % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
+    stim_matrix{12,led_ttl_channel+1}           = this_led_delay;               % 12: 'PulseTrainDelay' - Delay
+    stim_matrix{5,led_ttl_channel+1}            = this_led_duration;            % 5: 'Phase1Duration' - Duration of TTL up
+    stim_matrix{11,led_ttl_channel+1}           = this_led_duration;            % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
     
     % programming stim_switch TTL channel
-    stim_matrix{12,stim_switch_channel+1} 	= 0;                            % 12: 'PulseTrainDelay' - Delay
-    stim_matrix{5,stim_switch_channel+1}   	= trial_length;                 % 5: 'Phase1Duration' - Duration of TTL up
-    stim_matrix{11,stim_switch_channel+1}  	= this_led_duration;            % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
-    stim_matrix{3,stim_switch_channel+1}    = (this_whisk_stim - 1) * 5;    % 3: Phase1Voltage; 0V (low) for stimulator 1, 5V (high) for stimulator 2.
+    stim_matrix{12,stim_switch_channel+1}       = 0;                            % 12: 'PulseTrainDelay' - Delay
+    stim_matrix{5,stim_switch_channel+1}        = trial_length;                 % 5: 'Phase1Duration' - Duration of TTL up
+    stim_matrix{11,stim_switch_channel+1}       = this_led_duration;            % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
+    stim_matrix{3,stim_switch_channel+1}        = (this_whisk_stim - 1) * 5;    % 3: Phase1Voltage; 0V (low) for stimulator 1, 5V (high) for stimulator 2.
     
     % send the edited stimulus matrix to PulsePal
     ProgramPulsePal(stim_matrix);
     
     % Send the custom waveform to custom waveform slot nr. 1
-    success1                            	= SendCustomWaveform(1, stim_sample_duration, this_whisk_wave); % send waveform to PulsePal; use 'stim_sample_duration' to set sample rate
-    success2                                = SendCustomWaveform(2, sync_sample_duration, this_sync_wave); % send trial synchronisation waveform to PulsePal; use 'stim_sample_duration' to set sample rate
+    success1                                    = SendCustomWaveform(1, stim_sample_duration, this_whisk_wave); % send waveform to PulsePal; use 'stim_sample_duration' to set sample rate
+    success2                                    = SendCustomWaveform(2, sync_sample_duration, this_sync_wave); % send trial synchronisation waveform to PulsePal; use 'stim_sample_duration' to set sample rate
     
     % All stimulus parameters are uploaded; start fast loop to monitor for 
     % elapsed time
