@@ -5,7 +5,7 @@
 
 % The following five properties allow for entering multiple values,
 % generating more unique trials:
-whisk_delays            = [1]; % Whisk stimulus delays in s 
+whisk_delays            = [.5]; % Whisk stimulus delays in s 
 whisk_wave_freq         = [50]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
 
 %% IMPORTANT CHANGES 2018_01_31: 
@@ -14,23 +14,23 @@ whisk_trig_freq         = [2 5 10 20 40]; % !!! Values must be LOWER THAN every 
 total_whisk_duration    = [4.0]; % whisker stimulation duration in seconds
 %% END IMPORTANT CHANGES
 
-led_delays              = [.75 5.75]; % LED stimulus delays in s
-led_durations           = [5]; % LED stimulus durations
+led_delays              = [.25 5.25]; % LED stimulus delays in s
+led_durations           = [4.5]; % LED stimulus durations
 
 % These parameters currently only allow a single value per experiment:
 n_repeats               = 10; % How many repeats of each parameter combination?
 
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos
 
-trial_length            = 12; % How long is each trial (for trial TTL)
-trial_spacing           = 15; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_length            = 10; % How long is each trial (for trial TTL)
+trial_spacing           = 12; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
 
 %% Advanced whisker stim parameters
 
 v_max                   = 10; % Maximum voltage for whisking waveform (CAREFUL - it can't deal with negative voltages...)
 stim_sample_duration    = [0.0002]; % 
-sync_sample_duration    = 0.001;    % duration of each sample / pulse in the trial + whisk sync channel (total can't exceed 5000) 
+sync_sample_duration    = 0.002;    % duration of each sample / pulse in the trial + whisk sync channel (total can't exceed 5000) 
 
 %% Output channel assignment
 
@@ -137,14 +137,15 @@ for a = 1:n_stims
     end
     
 	prepend_zeros           = zeros(1,this_whisk_delay / sync_sample_duration);                     % part of trial before whisker stim
-    whisk_stim_on           = repmat(this_whisk_wave,1,n_whisk_stims) ~= 0;                         % representation of whenever whisk is happening based on whisker waveform above, but at wrong sample rate
-    whisk_stim_on           = resample(whisk_stim_on,stim_sample_duration,sync_sample_duration);    % resample to correspond to sync_sample_rate
+    whisk_stim_on           = repmat(this_whisk_wave,1,n_whisk_stims) ~= 0; % representation of whenever whisk is happening based on whisker waveform above, but at wrong sample rate
+    whisk_stim_inds         = 1:(sync_sample_duration/stim_sample_duration):length(whisk_stim_on);
+    whisk_stim_on           = whisk_stim_on(whisk_stim_inds);    % resample to correspond to sync_sample_rate
     append_zeros            = zeros(1,(trial_length / sync_sample_duration) - (length(prepend_zeros) + length(whisk_stim_on))); % find out how many samples need to be appended to complete the trial
     
     sync_pulse_wave         = [prepend_zeros whisk_stim_on append_zeros];           % string all parts of the sync signal together
     sync_pulse_wave         = (sync_pulse_wave + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
     
-    if length(this_whisk_wave) > 5000
+    if length(sync_pulse_wave) > 5000
         error(['Number of samples for syncing waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
     end
     
@@ -160,7 +161,7 @@ for a = 1:n_stims
     stim_matrix{5,whisk_wave_channel+1}         = stim_sample_duration;         % 5: 'Phase1Duration'
     
     % programming trial and whisk sync channel (trial = 2.5V, trial & whisk = 5V)
-    stim_matrix(15,trial_whisk_ttl_channel+1)  	= 2;                            % 15: 'CustomTrainID'
+    stim_matrix{15,trial_whisk_ttl_channel+1}  	= 2;                            % 15: 'CustomTrainID'
     stim_matrix{17,trial_whisk_ttl_channel+1}  	= 1;                            % 17: 'CustomTrainLoop'
     
     stim_matrix{12,trial_whisk_ttl_channel+1} 	= 0;                            % 12: 'PulseTrainDelay' - Delay
@@ -175,15 +176,15 @@ for a = 1:n_stims
     % programming stim_switch TTL channel
     stim_matrix{12,stim_switch_channel+1}       = 0;                            % 12: 'PulseTrainDelay' - Delay
     stim_matrix{5,stim_switch_channel+1}        = trial_length;                 % 5: 'Phase1Duration' - Duration of TTL up
-    stim_matrix{11,stim_switch_channel+1}       = this_led_duration;            % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
+    stim_matrix{11,stim_switch_channel+1}       = trial_length;                 % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
     stim_matrix{3,stim_switch_channel+1}        = (this_whisk_stim - 1) * 5;    % 3: Phase1Voltage; 0V (low) for stimulator 1, 5V (high) for stimulator 2.
-    
+
     % send the edited stimulus matrix to PulsePal
     ProgramPulsePal(stim_matrix);
     
     % Send the custom waveform to custom waveform slot nr. 1
     success1                                    = SendCustomWaveform(1, stim_sample_duration, this_whisk_wave); % send waveform to PulsePal; use 'stim_sample_duration' to set sample rate
-    success2                                    = SendCustomWaveform(2, sync_sample_duration, this_sync_wave); % send trial synchronisation waveform to PulsePal; use 'stim_sample_duration' to set sample rate
+    success2                                    = SendCustomWaveform(2, sync_sample_duration, sync_pulse_wave); % send trial synchronisation waveform to PulsePal; use 'stim_sample_duration' to set sample rate
     
     % All stimulus parameters are uploaded; start fast loop to monitor for 
     % elapsed time
