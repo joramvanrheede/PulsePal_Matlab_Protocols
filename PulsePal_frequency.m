@@ -28,7 +28,9 @@ trial_spacing           = 12; % Space between TRIGGERS for successive trials; NO
 
 %% Advanced whisker stim parameters
 
-v_max                   = 10; % Maximum voltage for whisking waveform (CAREFUL - it can't deal with negative voltages...)
+v_max_1                 = 10; % Maximum voltage for whisking waveform (CAREFUL - it can't deal with negative voltages...)
+v_max_2                 = 5;
+
 stim_sample_duration    = [0.0002]; % 
 sync_sample_duration    = 0.002;    % duration of each sample / pulse in the trial + whisk sync channel (total can't exceed 5000) 
 
@@ -123,7 +125,12 @@ for a = 1:n_stims
     
     % stimulus waveform generation
     waveform_volts          = ((1 - cos([0:2*pi/n_samples:2*pi])) / 2);     % generates a [n_samples]-sample sinusoidal waveform, from 0 to 1 to 0.
-    this_whisk_wave         = waveform_volts * v_max;                       % multiply waveform by target max voltage
+    
+    if this_whisk_stim == 1
+        this_whisk_wave         = waveform_volts * v_max_1;                       % multiply waveform by target max voltage
+    elseif this_whisk_stim == 2
+        this_whisk_wave         = waveform_volts * v_max_2; 
+    end
     
     % append zero values to whisk_waveform to make it last until the next
     % whisker stimulation is due
