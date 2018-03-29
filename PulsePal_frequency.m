@@ -5,25 +5,25 @@
 
 % The following five properties allow for entering multiple values,
 % generating more unique trials:
-whisk_delays            = [.5]; % Whisk stimulus delays in s 
+whisk_delays            = [1]; % Whisk stimulus delays in s 
 whisk_wave_freq         = [50]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
 
 %% IMPORTANT CHANGES 2018_01_31: 
 multiple_whisks         = true; % if 'true' then it will trigger the whisker multiple times according to the frequency and duration specified
-whisk_trig_freq         = [2 5 10 20 40]; % !!! Values must be LOWER THAN every 'whisk_wave_freq' value !!! Whisker stimulus triggering frequency (frequency of successive stimuli in HZ)
-total_whisk_duration    = [4.0]; % whisker stimulation duration in seconds
+whisk_trig_freq         = [1 2 4 8 10]; % !!! Values must be LOWER THAN every 'whisk_wave_freq' value !!! Whisker stimulus triggering frequency (frequency of successive stimuli in HZ)
+total_whisk_duration    = [4.59]; % whisker stimulation duration in seconds
 %% END IMPORTANT CHANGES
 
-led_delays              = [.25 5.25]; % LED stimulus delays in s
-led_durations           = [4.5]; % LED stimulus durations
+led_delays              = [.5 6]; % LED stimulus delays in s
+led_durations           = [5]; % LED stimulus durations
 
 % These parameters currently only allow a single value per experiment:
 n_repeats               = 10; % How many repeats of each parameter combination?
 
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos
 
-trial_length            = 10; % How long is each trial (for trial TTL)
-trial_spacing           = 12; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_length            = 11; % How long is each trial (for trial TTL)
+trial_spacing           = 18; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
 
 %% Advanced whisker stim parameters
@@ -32,7 +32,7 @@ v_max_1                 = 10; % Maximum voltage for whisking waveform (CAREFUL -
 v_max_2                 = 5;
 
 stim_sample_duration    = [0.0002]; % 
-sync_sample_duration    = 0.002;    % duration of each sample / pulse in the trial + whisk sync channel (total can't exceed 5000) 
+sync_sample_duration    = 0.005;    % duration of each sample / pulse in the trial + whisk sync channel (total can't exceed 5000) 
 
 %% Output channel assignment
 
@@ -114,7 +114,7 @@ for a = 1:n_stims
     loop_duration           = 1 / this_whisk_trig_freq;
     
     if multiple_whisks
-        n_whisk_stims   	= total_whisk_duration / loop_duration;
+        n_whisk_stims   	= floor(total_whisk_duration / loop_duration);
     else
         n_whisk_stims       = 1;
     end
@@ -139,6 +139,8 @@ for a = 1:n_stims
     append_zeros            = zeros(1,append_number);                       % create a vector of the appropriate nr of zeros to append
     this_whisk_wave         = [this_whisk_wave append_zeros];               % append the zero values
     
+    this_whisk_wave         = this_whisk_wave(1:end-1);
+    
     if length(this_whisk_wave) > 5000
         error(['Number of samples for whisking waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trigger frequency or whisk sample rate'])
     end
@@ -153,7 +155,7 @@ for a = 1:n_stims
     sync_pulse_wave         = (sync_pulse_wave + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
     
     if length(sync_pulse_wave) > 5000
-        error(['Number of samples for syncing waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
+        error(['Number of samples for syncing waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(sync_pulse_wave)) '; adjust trial length or sync sample rate'])
     end
     
     % Now start populating the PulsePal parameter matrix
