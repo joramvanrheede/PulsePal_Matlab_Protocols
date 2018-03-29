@@ -6,7 +6,7 @@
 
 % The following five properties allow for entering multiple values,
 % generating more unique trials:
-whisk_delays            = [0]; % Whisk stimulus delays in s 
+whisk_delays            = [0.1]; % Whisk stimulus delays in s 
 whisk_wave_freq         = [50]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
 
 %% IMPORTANT CHANGES 2018_01_31: 
@@ -24,16 +24,16 @@ n_repeats               = 20; % How many repeats of each parameter combination?
 
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos; default stimulator is stimulator 1
 
-trial_length            = 5; % How long is each trial (for trial TTL)
-trial_spacing           = 10; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_length            = 6; % How long is each trial (for trial TTL)
+trial_spacing           = 11; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
 
 %% Advanced whisker stim parameters
 
 v_max_1                	= 10; % Maximum voltage for whisking waveform (CAREFUL - it can't deal with negative voltages...)
-v_max_2                 = 10; % Maximum voltage for stimulator nr 2
+v_max_2                 = 5; % Maximum voltage for stimulator nr 2
 
-stim_sample_duration    = [0.0002]; % 
+stim_sample_duration    = [0.001]; % 
 sync_sample_duration    = 0.002;    % duration of each sample / pulse in the trial + whisk sync channel (total can't exceed 5000) 
 
 %% Output channel assignment
@@ -126,7 +126,7 @@ for a = 1:n_stims
     n_samples               = stim_duration / stim_sample_duration;         % Calculate how many 1 ms samples the waveform needs to last 
     
     % stimulus waveform generation
-    waveform_volts          = [0:0.01:1 ones(1,4800) fliplr(0:0.01:1)];
+    waveform_volts          = [0:0.01:1 ones(1,4750) fliplr(0:0.01:1)];
     
 
     if this_whisk_stim == 1
@@ -160,7 +160,7 @@ for a = 1:n_stims
     stim_matrix{17,whisk_wave_channel+1}        = 1;                            % 17: 'CustomTrainLoop'
     
     stim_matrix{12,whisk_wave_channel+1}        = this_whisk_delay;             % 12: 'PulseTrainDelay'
-    stim_matrix{11,whisk_wave_channel+1}        = stim_burst_duration;          % 11: 'PulseTrainDuration'
+    stim_matrix{11,whisk_wave_channel+1}        = length(waveform_volts) * stim_sample_duration;          % 11: 'PulseTrainDuration'
     stim_matrix{5,whisk_wave_channel+1}         = stim_sample_duration;         % 5: 'Phase1Duration'
     
     % programming trial and whisk sync channel (trial = 2.5V, trial & whisk = 5V)
