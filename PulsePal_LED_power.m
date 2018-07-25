@@ -91,10 +91,15 @@ for a = 1:n_repeats
     trial_mat = [trial_mat; block_mat(randperm(counter),:)];
 end
 
-size(trial_mat)
-
 %% Program execution
 n_stims             = size(trial_mat,1); % work out how many trials we are executing
+
+total_seconds       = n_stims * trial_spacing;
+
+disp('Starting protocol...')
+disp(['Total execution time will be ' num2str(total_seconds / 60) ' minutes.'])
+disp(' ')
+
 tic     % start timer
 
 for a = 1:n_stims
@@ -115,8 +120,10 @@ for a = 1:n_stims
         'Stim speed @ ' num2str(this_whisk_wave_freq) 'Hz; '...
         'Stim freq @ ' num2str(this_whisk_trig_freq) 'Hz; '...
         'LED @ ' num2str(this_led_delay) 's; '...
-        'for @ ' num2str(this_led_duration) 's.'...
-        'on stimulator ' num2str(this_whisk_stim)...
+        'for @ ' num2str(this_led_duration) 's; '...
+        'on stimulator ' num2str(this_whisk_stim) '; ' ...
+        'with amplitude of ' num2str(this_amplitude) '* maximum; '
+        'and LED power of ' num2str(this_led_power) 'mA.'
         ]);
     
     
