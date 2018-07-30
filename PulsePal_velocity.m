@@ -6,7 +6,7 @@
 % The following five properties allow for entering multiple values,
 % generating more unique trials:
 whisk_delays            = [1]; % Whisk stimulus delays in s 
-whisk_wave_freq         = [2 5 10 20 50]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
+whisk_wave_freq         = [2 5 10 20 50 100]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
 
 %% IMPORTANT CHANGES 2018_01_31: 
 multiple_whisks         = false; % if 'true' then it will trigger the whisker multiple times according to the frequency and duration specified
@@ -22,9 +22,12 @@ n_repeats               = 15; % How many repeats of each parameter combination?
 
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos
 
-trial_length            = 7; % How long is each trial (for trial TTL)
-trial_spacing           = 12; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_length            = 6; % How long is each trial (for trial TTL)
+trial_spacing           = 8; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
+amplitudes              = [1]; % Amplitude as proportions of v_max_1 & v_max_2 below
+
+LED_powers           	= [1]; % Power as proportion of max (max = 1000 mA)
 
 %% Advanced whisker stim parameters
 

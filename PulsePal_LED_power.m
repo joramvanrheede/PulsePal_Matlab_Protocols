@@ -23,11 +23,11 @@ n_repeats               = 20; % How many repeats of each parameter combination?
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos
 
 trial_length            = 5; % How long is each trial (for trial TTL)
-trial_spacing           = 15; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_spacing           = 8; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
 amplitudes              = [1]; % Amplitude as proportions of v_max_1 & v_max_2 below
 
-LED_powers           	= [.1 .25 .5 .75 1]; % Power as proportion of max (max = mA)
+LED_powers           	= [.1 .2 .3 .5 .75 1]; % Power as proportion of max (max = 1000 mA)
 
 %% Advanced whisker stim parameters
 
@@ -96,15 +96,15 @@ n_stims             = size(trial_mat,1); % work out how many trials we are execu
 
 total_seconds       = n_stims * trial_spacing;
 
-disp('Starting protocol...')
-disp(['Total execution time will be ' num2str(total_seconds / 60) ' minutes.'])
 disp(' ')
+disp(['Starting protocol totaling ' num2str(n_stims) ' trials...'])
+disp(['Total execution time will be ' num2str(total_seconds / 60) ' minutes.'])
 
 tic     % start timer
 
 for a = 1:n_stims
-    disp(['Preparing trial ' num2str(a) '...']);
-    
+    disp(' ')
+    disp(['Trial ' num2str(a) ' of ' num2str(n_stims) '...']);
     this_whisk_delay        = trial_mat(a,1);                               % obtain whisking delay for this trial
     this_whisk_wave_freq    = trial_mat(a,2);                               % obtain whisking stimulus waveform frequency (i.e. velocity) for this trial
     this_whisk_trig_freq    = trial_mat(a,3);                               % obtain whisking trigger frequency (i.e. rate) for this trial
@@ -115,17 +115,17 @@ for a = 1:n_stims
     this_led_power          = trial_mat(a,8);                               % obtain LED power for this trial
     
     % Display stimulus properties for this trial (also useful for debugging)
+
     disp([...
         'Whisk @ ' num2str(this_whisk_delay) 's; '...
-        'Stim speed @ ' num2str(this_whisk_wave_freq) 'Hz; '...
-        'Stim freq @ ' num2str(this_whisk_trig_freq) 'Hz; '...
-        'LED @ ' num2str(this_led_delay) 's; '...
-        'for @ ' num2str(this_led_duration) 's; '...
-        'on stimulator ' num2str(this_whisk_stim) '; ' ...
-        'with amplitude of ' num2str(this_amplitude) '* maximum; '
-        'and LED power of ' num2str(this_led_power) 'mA.'
+        'Speed ' num2str(this_whisk_wave_freq) 'Hz; '...
+        'Freq ' num2str(this_whisk_trig_freq) 'Hz; '...
+        'LED @ ' num2str(this_led_delay) 's '...
+        'for ' num2str(this_led_duration) 's; '...
+        'stim ' num2str(this_whisk_stim) '; ' ...
+        'amplitude ' num2str(this_amplitude) '; ' ...
+        'LED ' num2str(this_led_power*1000) 'mA.' ...
         ]);
-    
     
     % whisker stimulus programming
     stim_duration           = 1 / this_whisk_wave_freq;                     % how long does this wave stimulus last?
@@ -225,6 +225,9 @@ for a = 1:n_stims
     
     % Report trial number
     disp(['Trial ' num2str(a) ' triggered']);
+    disp(['Time remaining: ~ ' num2str((n_stims-a)*trial_spacing/60) ' minutes.'])
+    disp(' ')
+    
     pause(trial_length) % IMPORTANT! If you upload next trial parameters while the current trial is still running, it messes with the current trial
     
 end

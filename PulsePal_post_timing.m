@@ -25,6 +25,9 @@ n_stimulators           = 2; % 1 or 2, depending on whether we are using one or 
 trial_length            = 3; % How long is each trial (for trial TTL)
 trial_spacing           = 5; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
+amplitudes              = [1]; % Amplitude as proportions of v_max_1 & v_max_2 below
+
+LED_powers           	= [1]; % Power as proportion of max (max = 1000 mA)
 
 %% Advanced whisker stim parameters
 
@@ -37,7 +40,7 @@ sync_sample_duration    = 0.002;    % duration of each sample / pulse in the tri
 %% Output channel assignment
 
 whisk_wave_channel      = 1; % Which channel provides the whisking waveform for the amplifier
-trial_whisk_ttl_channel = 2; % Which channel provides the TTL signal for when the whisker is on
+trial_whisk_ttl_channel = 2; % Which channel 4provides the TTL signal for when the whisker is on
 led_ttl_channel         = 3; % Which channel provides the TTL trigger for the LED module
 stim_switch_channel   	= 4; % Which channel provides the signal that determines which stimulator to use
 
@@ -69,8 +72,12 @@ for a = 1:length(whisk_delays) % for all whisk_delays...
             for d = 1:length(led_delays) % for all led_delays...
                 for e = 1:length(led_durations) % for all led_durations...
                     for f = 1:n_stimulators % for each stimulator (currently 1 or 2)
-                        counter = counter + 1; % increment trial counter to keep track of number of unique trials...
-                        block_mat(counter,:)    = [whisk_delays(a) whisk_wave_freq(b) whisk_trig_freq(c) led_delays(d) led_durations(e) f]; % ...and generate a trial, appending it to the block.
+                        for g = 1:length(amplitudes) % for all whisking amplitudes
+                            for h = 1:length(LED_powers) % for all LED powers
+                                counter = counter + 1; % increment trial counter to keep track of number of unique trials...
+                                block_mat(counter,:)    = [whisk_delays(a) whisk_wave_freq(b) whisk_trig_freq(c) led_delays(d) led_durations(e) f amplitudes(g) LED_powers(h)]; % ...and generate a trial, appending it to the block.
+                            end
+                        end
                     end
                 end
             end
@@ -86,28 +93,39 @@ end
 
 %% Program execution
 n_stims             = size(trial_mat,1); % work out how many trials we are executing
+
+total_seconds       = n_stims * trial_spacing;
+
+disp(' ')
+disp(['Starting protocol totaling ' num2str(n_stims) ' trials...'])
+disp(['Total execution time will be ' num2str(total_seconds / 60) ' minutes.'])
+
 tic     % start timer
 
 for a = 1:n_stims
-    disp(['Preparing trial ' num2str(a) '...']);
-    
+    disp(' ')
+    disp(['Trial ' num2str(a) ' of ' num2str(n_stims) '...']);
     this_whisk_delay        = trial_mat(a,1);                               % obtain whisking delay for this trial
     this_whisk_wave_freq    = trial_mat(a,2);                               % obtain whisking stimulus waveform frequency (i.e. velocity) for this trial
     this_whisk_trig_freq    = trial_mat(a,3);                               % obtain whisking trigger frequency (i.e. rate) for this trial
     this_led_delay          = trial_mat(a,4);                               % obtain LED onset delay for this trial
     this_led_duration       = trial_mat(a,5);                               % obtain LED duration for this trial
 	this_whisk_stim         = trial_mat(a,6);                               % obtain stimulator ID for this trial
+    this_amplitude          = trial_mat(a,7);                               % obtain whisk stim amplitude for this trial
+    this_led_power          = trial_mat(a,8);                               % obtain LED power for this trial
     
     % Display stimulus properties for this trial (also useful for debugging)
+
     disp([...
         'Whisk @ ' num2str(this_whisk_delay) 's; '...
-        'Stim speed @ ' num2str(this_whisk_wave_freq) 'Hz; '...
-        'Stim freq @ ' num2str(this_whisk_trig_freq) 'Hz; '...
-        'LED @ ' num2str(this_led_delay) 's; '...
-        'for @ ' num2str(this_led_duration) 's.'...
-        'on stimulator ' num2str(this_whisk_stim)...
+        'Speed ' num2str(this_whisk_wave_freq) 'Hz; '...
+        'Freq ' num2str(this_whisk_trig_freq) 'Hz; '...
+        'LED @ ' num2str(this_led_delay) 's '...
+        'for ' num2str(this_led_duration) 's; '...
+        'stim ' num2str(this_whisk_stim) '; ' ...
+        'amplitude ' num2str(this_amplitude) '; ' ...
+        'LED ' num2str(this_led_power*1000) 'mA.' ...
         ]);
-    
     
     % whisker stimulus programming
     stim_duration           = 1 / this_whisk_wave_freq;                     % how long does this wave stimulus last?
@@ -132,6 +150,8 @@ for a = 1:n_stims
         this_whisk_wave         = waveform_volts * v_max_2; 
     end
     
+    this_whisk_wave         = this_whisk_wave * this_amplitude;
+    
     % append zero values to whisk_waveform to make it last until the next
     % whisker stimulation is due
     append_duration         = loop_duration - stim_duration;                % how much waiting time should be appended
@@ -144,13 +164,13 @@ for a = 1:n_stims
     end
     
 	prepend_zeros           = zeros(1,this_whisk_delay / sync_sample_duration);                     % part of trial before whisker stim
-    whisk_stim_on           = repmat(this_whisk_wave,1,n_whisk_stims) ~= 0; % representation of whenever whisk is happening based on whisker waveform above, but at wrong sample rate
+    whisk_stim_on           = repmat(this_whisk_wave,1,n_whisk_stims) ~= 0;                         % representation of whenever whisk is happening based on whisker waveform above, but at wrong sample rate
     whisk_stim_inds         = 1:(sync_sample_duration/stim_sample_duration):length(whisk_stim_on);
-    whisk_stim_on           = whisk_stim_on(whisk_stim_inds);    % resample to correspond to sync_sample_rate
+    whisk_stim_on           = whisk_stim_on(whisk_stim_inds);                                       % resample to correspond to sync_sample_rate
     append_zeros            = zeros(1,(trial_length / sync_sample_duration) - (length(prepend_zeros) + length(whisk_stim_on))); % find out how many samples need to be appended to complete the trial
     
     sync_pulse_wave         = [prepend_zeros whisk_stim_on append_zeros];           % string all parts of the sync signal together
-    sync_pulse_wave         = (sync_pulse_wave + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
+    sync_pulse_wave         = ((sync_pulse_wave * this_amplitude) + 1) * 2.5;                          % set waveform to go from 2.5V (trial onset) to 5V (whisker stims)
     
     if length(sync_pulse_wave) > 5000
         error(['Number of samples for syncing waveform exceeds PulsePal 2 maximum (5000) - offending number of samples: ' num2str(length(this_whisk_wave)) '; adjust trial length or sync sample rate'])
@@ -179,6 +199,7 @@ for a = 1:n_stims
     stim_matrix{12,led_ttl_channel+1}           = this_led_delay;               % 12: 'PulseTrainDelay' - Delay
     stim_matrix{5,led_ttl_channel+1}            = this_led_duration;            % 5: 'Phase1Duration' - Duration of TTL up
     stim_matrix{11,led_ttl_channel+1}           = this_led_duration;            % 11: 'PulseTrainDuration' - Duration of total nr of TTLs
+    stim_matrix{3,led_ttl_channel+1}            = this_led_power * 5;         	% 3: 'Phase1Voltage' - Output voltage when 'high' (5V = max input for LED box, triggering a 1mA LED pulse)
     
     % programming stim_switch TTL channel
     stim_matrix{12,stim_switch_channel+1}       = 0;                            % 12: 'PulseTrainDelay' - Delay
@@ -204,6 +225,9 @@ for a = 1:n_stims
     
     % Report trial number
     disp(['Trial ' num2str(a) ' triggered']);
+    disp(['Time remaining: ~ ' num2str((n_stims-a)*trial_spacing/60) ' minutes.'])
+    disp(' ')
+    
     pause(trial_length) % IMPORTANT! If you upload next trial parameters while the current trial is still running, it messes with the current trial
     
 end

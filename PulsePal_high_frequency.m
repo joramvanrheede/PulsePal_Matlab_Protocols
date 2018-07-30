@@ -5,25 +5,25 @@
 
 % The following five properties allow for entering multiple values,
 % generating more unique trials:
-whisk_delays            = [0.25]; % Whisk stimulus delays in s 
-whisk_wave_freq         = [50]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
+whisk_delays            = [1]; % Whisk stimulus delays in s 
+whisk_wave_freq         = [100]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
 
 %% IMPORTANT CHANGES 2018_01_31: 
 multiple_whisks         = true; % if 'true' then it will trigger the whisker multiple times according to the frequency and duration specified
-whisk_trig_freq         = [3]; % !!! Values must be LOWER THAN every 'whisk_wave_freq' value !!! Whisker stimulus triggering frequency (frequency of successive stimuli in HZ)
-total_whisk_duration    = [4]; % whisker stimulation duration in seconds
+whisk_trig_freq         = [25 50 75 100]; % !!! Values must be LOWER THAN every 'whisk_wave_freq' value !!! Whisker stimulus triggering frequency (frequency of successive stimuli in HZ)
+total_whisk_duration    = [4.04]; % whisker stimulation duration in seconds
 %% END IMPORTANT CHANGES
 
-led_delays              = [2]; % LED stimulus delays in s
-led_durations           = [.2]; % LED stimulus durations
+led_delays              = [.5 5.5]; % LED stimulus delays in s
+led_durations           = [5]; % LED stimulus durations
 
 % These parameters currently only allow a single value per experiment:
-n_repeats               = 50; % How many repeats of each parameter combination?
+n_repeats               = 10; % How many repeats of each parameter combination?
 
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos
 
-trial_length            = 5; % How long is each trial (for trial TTL)
-trial_spacing           = 7.5; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_length            = 12; % How long is each trial (for trial TTL)
+trial_spacing           = 15; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
 amplitudes              = [1]; % Amplitude as proportions of v_max_1 & v_max_2 below
 
