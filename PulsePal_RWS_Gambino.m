@@ -6,8 +6,8 @@
 % The following five properties allow for entering multiple values,
 % generating more unique trials:
 whisk_delays            = [1]; % Whisk stimulus delays in s 
-whisk_wave_freq         = [20]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
-whisk_sustain           = [.1]; % how long (in seconds) to sustain the whisker deflection. 
+whisk_wave_freq         = [50]; % Whisker stimulus velocity (frequency of WAVEFORM in Hz)
+whisk_sustain           = [.115]; % how long (in seconds) to sustain the whisker deflection. 
 
 do_whisk                = true;
 multiple_whisks         = true; % if 'true' then it will trigger the whisker multiple times according to the frequency and duration specified
@@ -43,12 +43,12 @@ stimulators             = 1;        % 1, 2 or [1 2] depending on whether we are 
 n_repeats               = 1;        % How many repeats of each parameter combination?
 
 
-trial_length            = 8; % How long is each trial (for trial TTL)
-trial_spacing           = 10; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
+trial_length            = 630; % How long is each trial (for trial TTL)
+trial_spacing           = 650; % Space between TRIGGERS for successive trials; NOTE - trial spacing incorporates time of trial execution; 
 
 %%
 
-debug                   = 1; % debug mode - run code but do not connect to PulsePal or send commands
+debug                   = 0; % debug mode - run code but do not connect to PulsePal or send commands
 
 %% Advanced whisker stim parameters
 
@@ -207,8 +207,10 @@ for a = 1:n_stims
     LED_loop_duration       = 1 / this_LED_trig_freq;
     
     if multiple_LED_stims
-        n_LED_stims         = total_LED_duration / LED_loop_duration;
+        LED_loop_duration	= 1 / this_LED_trig_freq;
+        n_LED_stims     	= total_LED_duration / LED_loop_duration;
     else
+        LED_loop_duration 	= this_LED_duration;
         n_LED_stims     	= 1;
     end
     
@@ -311,7 +313,11 @@ for a = 1:n_stims
     
     % All stimulus parameters are uploaded; start fast loop to monitor for 
     % elapsed time
-    while toc < trial_spacing
+    if a > 1
+        while toc < trial_spacing
+        end
+    else
+        pause(5)
     end
     
     % Now trigger all channels at the same time

@@ -12,33 +12,34 @@ whisk_sustain           = [.05]; % how long (in seconds) to sustain the whisker 
 
 do_whisk                = true;
 multiple_whisks         = true; % if 'true' then it will trigger the whisker multiple times according to the frequency and duration specified
-whisk_trig_freq         = [5]; % !!! Values must be LOWER THAN every 'whisk_wave_freq' value !!! Whisker stimulus triggering frequency (frequency of successive stimuli in HZ)
-total_whisk_duration    = [5]; % whisker stimulation duration in seconds
+whisk_trig_freq         = [2]; % !!! Values must be LOWER THAN every 'whisk_wave_freq' value !!! Whisker stimulus triggering frequency (frequency of successive stimuli in HZ)
+total_whisk_duration    = [4]; % whisker stimulation duration in seconds
 amplitudes              = [1]; % Amplitude as proportions of v_max_1 & v_max_2 below
 
 %% do sth for this
 do_led                  = true;
 LED_delays              = [.5]; % LED stimulus delays in s
-LED_durations           = [1]; % LED stimulus durations
+LED_durations           = [5]; % LED stimulus durations
 LED_powers           	= [1]; % Power as PROPORTION of max (max = 1, --> 1000 mA)
+LED_Vmax                = [5]; % maximum LED out voltage
 
 LED_stim_type         	= 'noise'; % supported: 'step', 'noise', to do: 'hwr noise' (half-wave rectified). To do: 'filtered noise' - Other things to consider: half-wave rectified noise, sine wave, ramped noise, sine wave modulated noise,
 
 %% NOTE: if choosing noise stimulus, these need to be specified:
 do_noise_filter         = true;
 noise_min_freq          = [1];
-noise_max_freq          = [100];
+noise_max_freq          = [50];
 
 LED_stim_envelope       = 'ramp up'; % supported: 'none', 'ramp up', 'ramp down', 'sinewave', 'triangle'
 
 
 
-multiple_LED_stims           = true;
-LED_trig_freqs        	= [.5];
-total_LED_duration      = [5];
+multiple_LED_stims    	= false;
+LED_trig_freqs        	= [.2];
+total_LED_duration      = [6];
 
 % These parameters currently only allow a single value per experiment:
-n_repeats               = 30; % How many repeats of each parameter combination?
+n_repeats               = 10; % How many repeats of each parameter combination?
 
 n_stimulators           = 2; % 1 or 2, depending on whether we are using one or two piezos
 
@@ -47,7 +48,7 @@ trial_spacing           = 10; % Space between TRIGGERS for successive trials; NO
 
 %%
 
-debug                   = 1; % debug mode - run code but do not connect to PulsePal or send commands
+debug                   = 0; % debug mode - run code but do not connect to PulsePal or send commands
 
 %% Advanced whisker stim parameters
 
@@ -202,12 +203,11 @@ for a = 1:n_stims
 
     %% LED stimulus wave generation
     
-    LED_stim_duration       = this_LED_duration;
-    LED_loop_duration       = 1 / this_LED_trig_freq;
-    
     if multiple_LED_stims
-        n_LED_stims         = total_LED_duration / LED_loop_duration;
+        LED_loop_duration	= 1 / this_LED_trig_freq;
+        n_LED_stims     	= total_LED_duration / LED_loop_duration;
     else
+        LED_loop_duration 	= this_LED_duration;
         n_LED_stims     	= 1;
     end
     
@@ -216,7 +216,7 @@ for a = 1:n_stims
     
     switch LED_stim_type
         case 'step' 
-            LED_waveform    = ones(1,n_LED_samples)  * this_LED_power;
+            LED_waveform    = ones(1,n_LED_samples);
 
         case 'noise'
             LED_waveform    = randn(1,n_LED_samples);                 	% sample from gaussian distribution
@@ -225,9 +225,7 @@ for a = 1:n_stims
                 [filt_b,filt_a] = butter(2, [noise_min_freq noise_max_freq]/((1/LED_sample_duration)/2));
                 LED_waveform    = filter(filt_b, filt_a, LED_waveform);
             end
-            
-            LED_waveform    = LED_waveform - min(LED_waveform);     % min --> 0
-            LED_waveform    = LED_waveform / max(LED_waveform);     % max --> 1
+
     end
     
     switch LED_stim_envelope
@@ -245,8 +243,13 @@ for a = 1:n_stims
             error(['Unsupported LED_stim_envelope: ' LED_stim_envelope])
     end
     
+
     LED_waveform    = LED_waveform .* this_LED_envelope;
     
+    LED_waveform    = LED_waveform - min(LED_waveform);     % min --> 0
+    LED_waveform    = LED_waveform / max(LED_waveform);     % max --> 1
+    
+    LED_waveform    = LED_waveform * this_LED_power * LED_Vmax;
     
     LED_append_duration   	= LED_loop_duration - this_LED_duration;
     LED_append_number       = round(LED_append_duration / LED_sample_duration);
@@ -310,7 +313,11 @@ for a = 1:n_stims
     
     % All stimulus parameters are uploaded; start fast loop to monitor for 
     % elapsed time
-    while toc < trial_spacing
+    if a > 1
+        while toc < trial_spacing
+        end
+    else
+        pause(5)
     end
     
     % Now trigger all channels at the same time
